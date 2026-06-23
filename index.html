@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAKTI NUSA - Dashboard Visualisasi Pengukuran Awardee</title>
+    <!-- Google Font: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <!-- jsPDF and html2canvas for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="light-mode">
+    <!-- Real-time Loading Overlay -->
+    <div id="app-loader" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #f8fafc; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;">
+        <div class="spin" style="width: 48px; height: 48px; border: 4px solid #e2e8f0; border-top-color: #dc2626; border-radius: 50%;"></div>
+        <p style="font-weight: 600; color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif;">Memuat Data Real-time Google Sheets...</p>
+    </div>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <img src="logo.png" alt="BAKTI NUSA Logo" class="sidebar-logo-img">
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-tab="overview">
+                    <a href="#overview">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Ringkasan Eksekutif</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="self-assessment">
+                    <a href="#self-assessment">
+                        <i data-lucide="user"></i>
+                        <span>Evaluasi Mandiri</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="eval-publik">
+                    <a href="#eval-publik">
+                        <i data-lucide="users"></i>
+                        <span>Evaluasi Publik (360°)</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="leadpro">
+                    <a href="#leadpro">
+                        <i data-lucide="award"></i>
+                        <span>Leadership Project</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="matriks">
+                    <a href="#matriks">
+                        <i data-lucide="table"></i>
+                        <span>Matriks Penilaian</span>
+                    </a>
+                </li>
+                <li class="menu-item" data-tab="instrumen">
+                    <a href="#instrumen">
+                        <i data-lucide="book-open"></i>
+                        <span>Eksplorasi Instrumen</span>
+                    </a>
+                </li>
+            </ul>
+            
+
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <h2 id="page-title">Ringkasan Eksekutif</h2>
+                </div>
+                
+                <div class="header-filters">
+                    <!-- Wilayah Filter -->
+                    <div class="filter-group">
+                        <label for="filter-wilayah"><i data-lucide="map-pin" size="16"></i> Wilayah:</label>
+                        <select id="filter-wilayah" class="custom-select">
+                            <option value="all">Semua Wilayah</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Awardee Filter -->
+                    <div class="filter-group" id="awardee-filter-container" style="display: none;">
+                        <label for="filter-awardee"><i data-lucide="user-check" size="16"></i> Awardee:</label>
+                        <select id="filter-awardee" class="custom-select">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-secondary" id="btn-print" style="display: none;">
+                        <i data-lucide="file-down"></i>
+                        <span>Ekspor PDF</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Body -->
+            <div class="content-body">
+                
+                <!-- TAB 1: OVERVIEW -->
+                <section id="tab-overview" class="tab-content active">
+                    <!-- KPI Cards -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon primary">
+                                <i data-lucide="users-2"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Total Awardee</h3>
+                                <p id="kpi-total-awardees">0</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon accent">
+                                <i data-lucide="map"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Total Wilayah</h3>
+                                <p id="kpi-total-regions">0</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon success">
+                                <i data-lucide="messages-square"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Responden Publik</h3>
+                                <p id="kpi-total-public-resp">0</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon warning">
+                                <i data-lucide="rocket"></i>
+                            </div>
+                            <div class="kpi-info">
+                                <h3>Responden Leadpro</h3>
+                                <p id="kpi-total-leadpro-resp">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i data-lucide="bar-chart-3"></i> Sebaran Awardee per Wilayah
+                                </div>
+                            </div>
+                            <div id="chart-awardee-per-region" style="height: 350px;"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i data-lucide="trending-up"></i> Rata-rata IPK Pengukuran per Wilayah
+                                </div>
+                            </div>
+                            <div id="chart-ipk-per-region" style="height: 350px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i data-lucide="pie-chart"></i> Kategori Asesmen Awal
+                                </div>
+                            </div>
+                            <div id="chart-dist-awal" style="height: 250px;"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i data-lucide="pie-chart"></i> Kategori Asesmen Tengah
+                                </div>
+                            </div>
+                            <div id="chart-dist-tengah" style="height: 250px;"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i data-lucide="pie-chart"></i> Kategori Evaluasi Publik
+                                </div>
+                            </div>
+                            <div id="chart-dist-publik" style="height: 250px;"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i data-lucide="pie-chart"></i> Kategori Leadpro
+                                </div>
+                            </div>
+                            <div id="chart-dist-leadpro" style="height: 250px;"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 2: EVALUASI MANDIRI -->
+                <section id="tab-self-assessment" class="tab-content">
+                    <div id="self-assessment-placeholder" class="empty-state">
+                        <i data-lucide="user" size="48"></i>
+                        <p>Silakan pilih Nama Awardee di bagian kanan atas untuk melihat data Evaluasi Mandiri.</p>
+                    </div>
+                    
+                    <div id="self-assessment-data" style="display: none;">
+                        <!-- Profile Card -->
+                        <div class="profile-header">
+                            <div class="profile-info-group">
+                                <div class="profile-avatar" id="self-avatar">?</div>
+                                <div class="profile-details">
+                                    <h3 id="self-name">-</h3>
+                                    <p>
+                                        <span id="self-campus">-</span> • 
+                                        <span id="self-region">-</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- IPK Comparisons -->
+                        <div class="grid-3">
+                            <div class="card text-center">
+                                <div class="card-header">
+                                    <div class="card-title">Asesmen Awal</div>
+                                </div>
+                                <div class="score-box">
+                                    <div class="score-num" id="self-ipk-awal">-</div>
+                                    <div class="score-lbl">IPK Awal</div>
+                                    <div id="self-badge-awal" style="margin-top: 8px;"></div>
+                                </div>
+                            </div>
+                            <div class="card text-center">
+                                <div class="card-header">
+                                    <div class="card-title">Asesmen Tengah</div>
+                                </div>
+                                <div class="score-box">
+                                    <div class="score-num" id="self-ipk-tengah">-</div>
+                                    <div class="score-lbl">IPK Tengah</div>
+                                    <div id="self-badge-tengah" style="margin-top: 8px;"></div>
+                                </div>
+                            </div>
+                            <div class="card text-center">
+                                <div class="card-header">
+                                    <div class="card-title">Progres IPK</div>
+                                </div>
+                                <div class="score-box">
+                                    <div class="score-num" id="self-ipk-delta">-</div>
+                                    <div class="score-lbl">Perubahan Nilai</div>
+                                    <div id="self-progress-direction" style="margin-top: 8px;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Variable Detail Scorecards -->
+                        <div class="grid-3" id="self-scorecards-container">
+                            <!-- Populated dynamically in app.js -->
+                        </div>
+
+                        <!-- Strengths, Weaknesses, and Recommendations -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title"><i data-lucide="brain-circuit"></i> Hasil Analisis & Interpretasi Mandiri</div>
+                            </div>
+                            
+                            <div class="grid-2" style="margin-bottom: 20px;">
+                                <div class="callout success">
+                                    <h4><i data-lucide="arrow-up-circle"></i> Kekuatan Utama (Nilai Tertinggi)</h4>
+                                    <p><strong>Asesmen Awal:</strong> <span id="self-strength-awal">-</span></p>
+                                    <p style="margin-top: 4px;"><strong>Asesmen Tengah:</strong> <span id="self-strength-tengah">-</span></p>
+                                </div>
+                                <div class="callout warning">
+                                    <h4><i data-lucide="arrow-down-circle"></i> Kelemahan Utama (Nilai Terendah)</h4>
+                                    <p><strong>Asesmen Awal:</strong> <span id="self-weakness-awal">-</span></p>
+                                    <p style="margin-top: 4px;"><strong>Asesmen Tengah:</strong> <span id="self-weakness-tengah">-</span></p>
+                                </div>
+                            </div>
+
+                            <div class="card-title" style="margin-bottom: 12px; font-size: 1rem;"><i data-lucide="lightbulb"></i> Rekomendasi Pengembangan Diri</div>
+                            <div class="accordion">
+                                <div class="accordion-item open">
+                                    <div class="accordion-header" style="cursor: default;">
+                                        <span>1. Self Maturity (Kematangan Diri)</span>
+                                    </div>
+                                    <div class="accordion-content">
+                                        <ul id="rec-self-maturity">
+                                            <li>-</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="accordion-item open">
+                                    <div class="accordion-header" style="cursor: default;">
+                                        <span>2. Competency Enrichment (Pengayaan Kompetensi)</span>
+                                    </div>
+                                    <div class="accordion-content">
+                                        <ul id="rec-competency-enrichment">
+                                            <li>-</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="accordion-item open">
+                                    <div class="accordion-header" style="cursor: default;">
+                                        <span>3. Bringing Inspiration (Membawa Inspirasi)</span>
+                                    </div>
+                                    <div class="accordion-content">
+                                        <ul id="rec-bringing-inspiration">
+                                            <li>-</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top & Bottom Questions -->
+                        <div class="grid-2">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title" style="color: var(--success);"><i data-lucide="thumbs-up"></i> 5 Pertanyaan dengan Skor Tertinggi</div>
+                                </div>
+                                <div id="self-top-questions" class="instrument-list" style="max-height: none; overflow: visible; padding-right: 0;">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-title" style="color: var(--danger);"><i data-lucide="thumbs-down"></i> 5 Pertanyaan dengan Skor Terendah</div>
+                                </div>
+                                <div id="self-bottom-questions" class="instrument-list" style="max-height: none; overflow: visible; padding-right: 0;">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- TAB 3: EVALUASI PUBLIK (360) -->
+                <section id="tab-eval-publik" class="tab-content">
+                    <div id="eval-publik-placeholder" class="empty-state">
+                        <i data-lucide="users" size="48"></i>
+                        <p>Silakan pilih Nama Awardee di bagian kanan atas untuk melihat data Evaluasi Publik (360°).</p>
+                    </div>
+
+                    <div id="eval-publik-data" style="display: none;">
+                        <!-- Compliance Grid -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title"><i data-lucide="check-circle-2"></i> Status Kelengkapan Responden Evaluasi Publik</div>
+                            </div>
+                            <div class="compliance-grid">
+                                <div class="compliance-card" id="comp-manager">
+                                    <span style="font-size: 0.85rem; font-weight:600; color:var(--text-secondary);">Manajer Wilayah (Min. 1)</span>
+                                    <span class="compliance-val" id="comp-manager-val">0 / 1</span>
+                                    <span id="comp-manager-badge"></span>
+                                </div>
+                                <div class="compliance-card" id="comp-peer">
+                                    <span style="font-size: 0.85rem; font-weight:600; color:var(--text-secondary);">Peer Awardee (Min. 3)</span>
+                                    <span class="compliance-val" id="comp-peer-val">0 / 3</span>
+                                    <span id="comp-peer-badge"></span>
+                                </div>
+                                <div class="compliance-card" id="comp-external">
+                                    <span style="font-size: 0.85rem; font-weight:600; color:var(--text-secondary);">Jejaring Eksternal (Min. 50)</span>
+                                    <span class="compliance-val" id="comp-external-val">0 / 50</span>
+                                    <span id="comp-external-badge"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 360 Perspective Scorecards -->
+                        <div class="grid-4" id="eval-scorecards-container">
+                            <!-- Populated dynamically in app.js -->
+                        </div>
+
+                        <!-- Gap Analysis & Psychological Interpretation -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title"><i data-lucide="git-compare"></i> Analisis Kesenjangan (Gap Analysis)</div>
+                            </div>
+                            <div class="grid-3" style="margin-bottom: 20px;">
+                                <div class="score-box">
+                                    <span class="score-num" id="gap-self-val">-</span>
+                                    <span class="score-lbl">IPK Mandiri (Self)</span>
+                                </div>
+                                <div class="score-box">
+                                    <span class="score-num" id="gap-public-val">-</span>
+                                    <span class="score-lbl">IPK Publik (Evaluasi)</span>
+                                </div>
+                                <div class="score-box" id="gap-diff-container">
+                                    <span class="score-num" id="gap-diff-val">-</span>
+                                    <span class="score-lbl" id="gap-diff-lbl">Selisih (Gap)</span>
+                                </div>
+                            </div>
+                            
+                            <div class="callout" id="gap-interpretation-box">
+                                <h4 id="gap-interpretation-title"><i data-lucide="info"></i> Interpretasi Gap</h4>
+                                <p id="gap-interpretation-text">-</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- TAB 4: LEADERSHIP PROJECT (LEADPRO) -->
+                <section id="tab-leadpro" class="tab-content">
+                    <div id="leadpro-placeholder" class="empty-state">
+                        <i data-lucide="award" size="48"></i>
+                        <p>Silakan pilih Nama Awardee di bagian kanan atas untuk melihat data Leadership Project (Leadpro).</p>
+                    </div>
+
+                    <div id="leadpro-data" style="display: none;">
+                        <!-- Project Details Header -->
+                        <div class="profile-header" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(217, 70, 239, 0.05) 100%);">
+                            <div class="profile-info-group">
+                                <div class="profile-avatar" style="background: var(--gradient-primary);" id="leadpro-project-avatar">P</div>
+                                <div class="profile-details">
+                                    <h3 id="leadpro-project-name">-</h3>
+                                    <p>
+                                        <span>Proyek Kepemimpinan oleh: </span>
+                                        <strong id="leadpro-awardee-name">-</strong>
+                                    </p>
+                                     <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+                                         <span>Jumlah Responden: <strong id="leadpro-respondent-count">-</strong></span>
+                                     </p>
+                                </div>
+                            </div>
+                            <div class="filter-group">
+                                <label for="filter-leadpro-relation"><i data-lucide="users-2" size="16"></i> Responden:</label>
+                                <select id="filter-leadpro-relation" class="custom-select">
+                                    <option value="overall">Semua (Overall)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Leadpro Scorecards Grid -->
+                        <div class="grid-5" id="leadpro-scorecards-container">
+                            <!-- Populated dynamically in app.js -->
+                        </div>
+
+                        <!-- Recommendations / Advice -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title"><i data-lucide="message-square"></i> Rekomendasi & Saran Tindak Lanjut (AI Generated)</div>
+                            </div>
+                            <div class="grid-2">
+                                <div class="callout info" style="margin-bottom:12px;">
+                                    <h4>Dampak Leadership Project</h4>
+                                    <p id="suggest-dampak">-</p>
+                                </div>
+                                <div class="callout success" style="margin-bottom:12px;">
+                                    <h4>Peran & Pengalaman Kepemimpinan</h4>
+                                    <p id="suggest-peran">-</p>
+                                </div>
+                                <div class="callout warning" style="margin-bottom:12px;">
+                                    <h4>Pengembangan Kapasitas Pribadi</h4>
+                                    <p id="suggest-kapasitas">-</p>
+                                </div>
+                                <div class="callout" style="margin-bottom:12px; border-left-color: var(--accent); background-color: rgba(217, 70, 239, 0.05);">
+                                    <h4>Refleksi & Keberlanjutan Proyek</h4>
+                                    <p id="suggest-refleksi">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- TAB 5: MATRIKS PENILAIAN -->
+                <section id="tab-matriks" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i data-lucide="table"></i> Matriks Perbandingan Seluruh Awardee</div>
+                            <div class="search-box">
+                                <i data-lucide="search" class="search-icon" size="18"></i>
+                                <input type="text" id="matriks-search" class="search-input" placeholder="Cari nama awardee atau kampus...">
+                            </div>
+                        </div>
+                        
+                        <div class="table-wrapper">
+                            <table class="data-table" id="table-matriks">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable(0)">Nama Awardee <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th onclick="sortTable(1)">Wilayah <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th onclick="sortTable(2)">Kampus <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th onclick="sortTable(3)">IPK Awal <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th onclick="sortTable(4)">IPK Tengah <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th onclick="sortTable(5)">IPK Peer <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th onclick="sortTable(6)">IPK Manajer <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th onclick="sortTable(7)">IPK Jejaring <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th onclick="sortTable(8)">IPK Leadpro <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="matriks-table-body">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="table-footer">
+                            <span class="pagination-info" id="matriks-pagination-info">Menampilkan 1-10 dari 55 Awardee</span>
+                            <div class="pagination-controls">
+                                <button class="btn btn-secondary btn-sm" id="matriks-prev-btn" onclick="prevPage()">Sebelumnya</button>
+                                <button class="btn btn-secondary btn-sm" id="matriks-next-btn" onclick="nextPage()">Selanjutnya</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 6: INSTRUMEN EXPLORER -->
+                <section id="tab-instrumen" class="tab-content">
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title"><i data-lucide="book-open"></i> Soal / Indikator Asesmen & 360° (50 Soal)</div>
+                            </div>
+                            <div class="search-box" style="margin-bottom:16px; max-width:100%;">
+                                <i data-lucide="search" class="search-icon" size="18"></i>
+                                <input type="text" id="instrumen-assess-search" class="search-input" placeholder="Cari instrumen atau kata kunci..." oninput="filterInstruments('assess')">
+                            </div>
+                            <div id="instrumen-assess-list" class="instrument-list" style="max-height: 500px;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title"><i data-lucide="rocket"></i> Soal / Indikator Leadership Project (22 Soal)</div>
+                            </div>
+                            <div class="search-box" style="margin-bottom:16px; max-width:100%;">
+                                <i data-lucide="search" class="search-icon" size="18"></i>
+                                <input type="text" id="instrumen-leadpro-search" class="search-input" placeholder="Cari instrumen atau kata kunci..." oninput="filterInstruments('leadpro')">
+                            </div>
+                            <div id="instrumen-leadpro-list" class="instrument-list" style="max-height: 500px;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Include main application logic as ES Module -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
