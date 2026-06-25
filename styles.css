@@ -931,3 +931,105 @@ body.no-transitions *:not(.spin) {
     animation: none !important;
 }
 
+/* Stack Layout for Evaluasi Publik Gap Analysis */
+.eval-stack-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.eval-stack-card {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 24px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+}
+
+.eval-stack-card:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
+.eval-stack-col-score {
+    flex: 0 0 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding-right: 24px;
+    border-right: 1px solid var(--border-color);
+}
+
+.eval-stack-col-details {
+    flex: 0 0 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+    padding-left: 24px;
+    padding-right: 24px;
+    border-right: 1px solid var(--border-color);
+}
+
+.eval-stack-col-interpret {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 24px;
+}
+
+.eval-gap-badge-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.eval-gap-num-box {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+/* Compliance custom highlights */
+.compliance-card.met-excel {
+    border-color: rgba(16, 185, 129, 0.4);
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.compliance-card.warning {
+    border-color: rgba(245, 158, 11, 0.3);
+    background-color: rgba(245, 158, 11, 0.05);
+}
+
+.compliance-card.kurang {
+    border-color: rgba(239, 68, 68, 0.25);
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+/* Mobile responsive for stacked cards */
+@media (max-width: 991px) {
+    .eval-stack-card {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .eval-stack-col-score, .eval-stack-col-details {
+        flex: 1;
+        padding: 0 0 20px 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .eval-stack-col-interpret {
+        padding-left: 0;
+    }
+}
+
+

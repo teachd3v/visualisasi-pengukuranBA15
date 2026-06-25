@@ -321,11 +321,10 @@
                             </div>
                         </div>
 
-                        <!-- Top & Bottom Questions -->
                         <div class="grid-2">
                             <div class="card">
                                 <div class="card-header">
-                                    <div class="card-title" style="color: var(--success);"><i data-lucide="thumbs-up"></i> 5 Pertanyaan dengan Skor Tertinggi</div>
+                                     <div class="card-title" style="color: var(--success);"><i data-lucide="thumbs-up"></i> 5 Pertanyaan dengan Skor Tertinggi (&gt; 3.50)</div>
                                 </div>
                                 <div id="self-top-questions" class="instrument-list" style="max-height: none; overflow: visible; padding-right: 0;">
                                     <!-- Populated dynamically -->
@@ -333,7 +332,7 @@
                             </div>
                             <div class="card">
                                 <div class="card-header">
-                                    <div class="card-title" style="color: var(--danger);"><i data-lucide="thumbs-down"></i> 5 Pertanyaan dengan Skor Terendah</div>
+                                     <div class="card-title" style="color: var(--danger);"><i data-lucide="thumbs-down"></i> 5 Pertanyaan dengan Skor Terendah (&lt; 3.00)</div>
                                 </div>
                                 <div id="self-bottom-questions" class="instrument-list" style="max-height: none; overflow: visible; padding-right: 0;">
                                     <!-- Populated dynamically -->
@@ -369,42 +368,16 @@
                                     <span id="comp-peer-badge"></span>
                                 </div>
                                 <div class="compliance-card" id="comp-external">
-                                    <span style="font-size: 0.85rem; font-weight:600; color:var(--text-secondary);">Jejaring Eksternal (Min. 50)</span>
-                                    <span class="compliance-val" id="comp-external-val">0 / 50</span>
+                                    <span style="font-size: 0.85rem; font-weight:600; color:var(--text-secondary);">Jejaring Eksternal (Min. 30)</span>
+                                    <span class="compliance-val" id="comp-external-val">0 / 30</span>
                                     <span id="comp-external-badge"></span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 360 Perspective Scorecards -->
-                        <div class="grid-4" id="eval-scorecards-container">
+                        <div class="eval-stack-container" id="eval-scorecards-container">
                             <!-- Populated dynamically in app.js -->
-                        </div>
-
-                        <!-- Gap Analysis & Psychological Interpretation -->
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title"><i data-lucide="git-compare"></i> Analisis Kesenjangan (Gap Analysis)</div>
-                            </div>
-                            <div class="grid-3" style="margin-bottom: 20px;">
-                                <div class="score-box">
-                                    <span class="score-num" id="gap-self-val">-</span>
-                                    <span class="score-lbl">IPK Mandiri (Self)</span>
-                                </div>
-                                <div class="score-box">
-                                    <span class="score-num" id="gap-public-val">-</span>
-                                    <span class="score-lbl">IPK Publik (Evaluasi)</span>
-                                </div>
-                                <div class="score-box" id="gap-diff-container">
-                                    <span class="score-num" id="gap-diff-val">-</span>
-                                    <span class="score-lbl" id="gap-diff-lbl">Selisih (Gap)</span>
-                                </div>
-                            </div>
-                            
-                            <div class="callout" id="gap-interpretation-box">
-                                <h4 id="gap-interpretation-title"><i data-lucide="info"></i> Interpretasi Gap</h4>
-                                <p id="gap-interpretation-text">-</p>
-                            </div>
                         </div>
 
                     </div>
@@ -497,7 +470,7 @@
                                         <th onclick="sortTable(5)">IPK Peer <i data-lucide="chevrons-up-down" size="14"></i></th>
                                         <th onclick="sortTable(6)">IPK Manajer <i data-lucide="chevrons-up-down" size="14"></i></th>
                                         <th onclick="sortTable(7)">IPK Jejaring <i data-lucide="chevrons-up-down" size="14"></i></th>
-                                        <th onclick="sortTable(8)">IPK Leadpro <i data-lucide="chevrons-up-down" size="14"></i></th>
+                                        <th onclick="sortTable(8)">Capaian Leadpro (%) <i data-lucide="chevrons-up-down" size="14"></i></th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>

@@ -330,6 +330,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         return '<span class="badge badge-kurang">Perlu Peningkatan</span>';
     }
 
+    function getLeadproBadge(pct) {
+        if (pct === null || pct === undefined || isNaN(pct)) return '<span class="badge badge-kurang">N/A</span>';
+        if (pct >= 87.75) return '<span class="badge badge-cumlaude">Sangat Memuaskan</span>';
+        if (pct >= 69.00) return '<span class="badge badge-sangat-memuaskan">Memuaskan</span>';
+        if (pct >= 50.00) return '<span class="badge badge-memuaskan">Cukup Memuaskan</span>';
+        return '<span class="badge badge-kurang">Perlu Peningkatan</span>';
+    }
+
     function getStrengthsAndWeaknesses(stats) {
         if (!stats) return { strength: '-', weakness: '-' };
         const vars = [
@@ -795,10 +803,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // IPK Scores
-        document.getElementById('self-ipk-awal').textContent = ipkAwal ? ipkAwal.toFixed(3) : 'N/A';
+        document.getElementById('self-ipk-awal').textContent = ipkAwal ? ipkAwal.toFixed(2) : 'N/A';
         document.getElementById('self-badge-awal').innerHTML = getIpkBadge(ipkAwal);
 
-        document.getElementById('self-ipk-tengah').textContent = ipkTengah ? ipkTengah.toFixed(3) : 'N/A';
+        document.getElementById('self-ipk-tengah').textContent = ipkTengah ? ipkTengah.toFixed(2) : 'N/A';
         document.getElementById('self-badge-tengah').innerHTML = getIpkBadge(ipkTengah);
 
         // Progress Delta
@@ -807,7 +815,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const sign = delta >= 0 ? '+' : '';
             const statusClass = delta >= 0 ? 'badge-success' : 'badge-danger';
             const icon = delta >= 0 ? 'trending-up' : 'trending-down';
-            document.getElementById('self-ipk-delta').textContent = sign + delta.toFixed(3);
+            document.getElementById('self-ipk-delta').textContent = sign + delta.toFixed(2);
             document.getElementById('self-progress-direction').innerHTML = `<span class="badge ${statusClass}"><i data-lucide="${icon}" size="12"></i> ${delta >= 0 ? 'Naik' : 'Turun'}</span>`;
         } else {
             document.getElementById('self-ipk-delta').textContent = 'N/A';
@@ -934,38 +942,63 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
         });
 
-        // Sort for Top (descending) and Bottom (ascending)
-        const top5 = [...qScores].sort((a, b) => b.score - a.score || a.code.localeCompare(b.code, undefined, {numeric: true})).slice(0, 5);
-        const bottom5 = [...qScores].sort((a, b) => a.score - b.score || a.code.localeCompare(b.code, undefined, {numeric: true})).slice(0, 5);
+        // Sort for Top (descending > 3.50) and Bottom (ascending < 3.00)
+        const top5 = [...qScores]
+            .filter(q => q.score > 3.50)
+            .sort((a, b) => b.score - a.score || a.code.localeCompare(b.code, undefined, {numeric: true}))
+            .slice(0, 5);
+
+        const bottom5 = [...qScores]
+            .filter(q => q.score < 3.00)
+            .sort((a, b) => a.score - b.score || a.code.localeCompare(b.code, undefined, {numeric: true}))
+            .slice(0, 5);
 
         const topContainer = document.getElementById('self-top-questions');
         const bottomContainer = document.getElementById('self-bottom-questions');
 
-        topContainer.innerHTML = top5.map(q => `
-            <div class="instrument-item">
-                <span class="instrument-code">${q.code}</span>
-                <div style="flex:1;">
-                    <div class="q-detail-header" style="margin-bottom:2px;">
-                        <span style="font-size:0.8rem; font-weight:600; color:var(--text-primary);">${q.code}</span>
-                        <strong style="color:var(--success); font-size:0.9rem;">${q.score.toFixed(2)}</strong>
-                    </div>
-                    <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.3;">${q.text}</p>
+        if (top5.length === 0) {
+            topContainer.innerHTML = `
+                <div class="empty-state" style="padding: 24px 0; text-align: center; width: 100%;">
+                    <i data-lucide="info" size="24" style="color: var(--text-muted); margin-bottom: 8px;"></i>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Tidak ada pertanyaan dengan skor &gt; 3.50</p>
                 </div>
-            </div>
-        `).join('');
+            `;
+        } else {
+            topContainer.innerHTML = top5.map(q => `
+                <div class="instrument-item">
+                    <span class="instrument-code">${q.code}</span>
+                    <div style="flex:1;">
+                        <div class="q-detail-header" style="margin-bottom:2px;">
+                            <span style="font-size:0.8rem; font-weight:600; color:var(--text-primary);">${q.code}</span>
+                            <strong style="color:var(--success); font-size:0.9rem;">${q.score.toFixed(2)}</strong>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.3;">${q.text}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-        bottomContainer.innerHTML = bottom5.map(q => `
-            <div class="instrument-item">
-                <span class="instrument-code" style="background-color:var(--danger);">${q.code}</span>
-                <div style="flex:1;">
-                    <div class="q-detail-header" style="margin-bottom:2px;">
-                        <span style="font-size:0.8rem; font-weight:600; color:var(--text-primary);">${q.code}</span>
-                        <strong style="color:var(--danger); font-size:0.9rem;">${q.score.toFixed(2)}</strong>
-                    </div>
-                    <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.3;">${q.text}</p>
+        if (bottom5.length === 0) {
+            bottomContainer.innerHTML = `
+                <div class="empty-state" style="padding: 24px 0; text-align: center; width: 100%;">
+                    <i data-lucide="check-circle" size="24" style="color: var(--success); margin-bottom: 8px;"></i>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Semua pertanyaan bernilai &ge; 3.00</p>
                 </div>
-            </div>
-        `).join('');
+            `;
+        } else {
+            bottomContainer.innerHTML = bottom5.map(q => `
+                <div class="instrument-item">
+                    <span class="instrument-code" style="background-color:var(--danger);">${q.code}</span>
+                    <div style="flex:1;">
+                        <div class="q-detail-header" style="margin-bottom:2px;">
+                            <span style="font-size:0.8rem; font-weight:600; color:var(--text-primary);">${q.code}</span>
+                            <strong style="color:var(--danger); font-size:0.9rem;">${q.score.toFixed(2)}</strong>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.3;">${q.text}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
     }
 
 
@@ -1072,7 +1105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     externalIpk += eStats.ipk;
                     sumExternalResp += eStats.respondent_count;
                     countE++;
-                    if (eStats.respondent_count >= 50) metExternal++;
+                    if (eStats.respondent_count >= 30) metExternal++;
                 }
             });
 
@@ -1099,15 +1132,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Set compliance values and labels
             document.getElementById('comp-manager-val').textContent = `${countM} / ${totalAwardees}`;
             document.getElementById('comp-peer-val').textContent = `${countP} / ${totalAwardees}`;
-            document.getElementById('comp-external-val').textContent = `${sumExternalResp} / ${50 * totalAwardees}`;
+            document.getElementById('comp-external-val').textContent = `${sumExternalResp} / ${30 * totalAwardees}`;
             
             document.querySelector('#comp-manager > span').textContent = 'Manajer Wilayah (Min. 1 per Awardee)';
             document.querySelector('#comp-peer > span').textContent = 'Peer Awardee (Rekan Wilayah)';
-            document.querySelector('#comp-external > span').textContent = 'Jejaring Eksternal (Min. 50 per Awardee)';
+            document.querySelector('#comp-external > span').textContent = 'Jejaring Eksternal (Min. 30 per Awardee)';
 
             updateComplianceUI('comp-manager', countM, totalAwardees, 'comp-manager-badge');
             updateComplianceUI('comp-peer', countP, totalAwardees, 'comp-peer-badge');
-            updateComplianceUI('comp-external', sumExternalResp, 50 * totalAwardees, 'comp-external-badge');
+            updateExternalComplianceUI('comp-external', countExternal, 'comp-external-badge');
 
         } else {
             // Individual View
@@ -1120,15 +1153,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             document.getElementById('comp-manager-val').textContent = `${countManager} / 1`;
             document.getElementById('comp-peer-val').textContent = `${countPeer} / ${targetPeer}`;
-            document.getElementById('comp-external-val').textContent = `${countExternal} / 50`;
+            document.getElementById('comp-external-val').textContent = `${countExternal} / 30`;
 
             document.querySelector('#comp-manager > span').textContent = 'Manajer Wilayah (Min. 1)';
             document.querySelector('#comp-peer > span').textContent = `Peer Awardee (Min. ${targetPeer})`;
-            document.querySelector('#comp-external > span').textContent = 'Jejaring Eksternal (Min. 50)';
+            document.querySelector('#comp-external > span').textContent = 'Jejaring Eksternal (Min. 30)';
 
             updateComplianceUI('comp-manager', countManager, 1, 'comp-manager-badge');
             updateComplianceUI('comp-peer', countPeer, targetPeer, 'comp-peer-badge');
-            updateComplianceUI('comp-external', countExternal, 50, 'comp-external-badge');
+            updateExternalComplianceUI('comp-external', countExternal, 'comp-external-badge');
 
             // Self avg
             let c = 0;
@@ -1180,6 +1213,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        function updateExternalComplianceUI(elId, count, badgeId) {
+            const el = document.getElementById(elId);
+            const badge = document.getElementById(badgeId);
+            
+            let statusText = '';
+            let cardClass = 'compliance-card';
+            let badgeClass = 'badge';
+            let iconName = 'alert-triangle';
+            
+            if (count > 30) {
+                statusText = 'Sangat Memuaskan';
+                cardClass += ' met-excel';
+                badgeClass += ' badge-success';
+                iconName = 'check-check';
+            } else if (count >= 24) {
+                statusText = 'Memuaskan';
+                cardClass += ' met';
+                badgeClass += ' badge-success';
+                iconName = 'check';
+            } else if (count >= 16) {
+                statusText = 'Cukup Memuaskan';
+                cardClass += ' warning';
+                badgeClass += ' badge-cumlaude';
+                iconName = 'info';
+            } else if (count >= 8) {
+                statusText = 'Kurang Memuaskan';
+                cardClass += ' kurang';
+                badgeClass += ' badge-kurang';
+                iconName = 'alert-circle';
+            } else {
+                statusText = 'Tidak Memuaskan';
+                cardClass += ' unmet';
+                badgeClass += ' badge-danger';
+                iconName = 'alert-triangle';
+            }
+            
+            el.className = cardClass;
+            badge.innerHTML = `<span class="${badgeClass}"><i data-lucide="${iconName}" size="10"></i> ${statusText}</span>`;
+        }
+
         function updateGroupComplianceUI(elId, met, total, badgeId) {
             const el = document.getElementById(elId);
             const badge = document.getElementById(badgeId);
@@ -1197,6 +1270,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const scorecardsContainer = document.getElementById('eval-scorecards-container');
         scorecardsContainer.innerHTML = '';
 
+        const ipkSelf = hasSelf ? selfIpk : null;
+
         const perspectives = [
             { 
                 name: 'Mandiri (Self)', 
@@ -1205,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 m: selfMaturity, 
                 c: selfComp, 
                 i: selfInsp, 
-                ipk: selfIpk,
+                ipk: selfIpk, 
                 color: 'var(--primary)' 
             },
             { 
@@ -1215,7 +1290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 m: peerMaturity, 
                 c: peerComp, 
                 i: peerInsp, 
-                ipk: peerIpk,
+                ipk: peerIpk, 
                 color: 'var(--success)' 
             },
             { 
@@ -1240,143 +1315,197 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         ];
 
-        perspectives.forEach(p => {
-            if (p.has) {
+        perspectives.forEach((p, idx) => {
+            if (!p.has) {
+                // Render N/A Card
                 scorecardsContainer.innerHTML += `
-                    <div class="card text-center" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; margin-bottom: 0;">
-                        <div>
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; font-size: 0.95rem;">
-                                <i data-lucide="${p.icon}" size="16" style="color: ${p.color};"></i>
-                                <span>${p.name}</span>
-                            </div>
-                            <div class="score-box" style="margin-bottom: 16px;">
-                                <div class="score-num">${p.ipk.toFixed(3)}</div>
-                                <div class="score-lbl">IPK Perspektif</div>
-                                <div style="margin-top: 8px;">${getIpkBadge(p.ipk)}</div>
-                            </div>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 12px; text-align: left;">
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
-                                <span style="color: var(--text-secondary);">Self Maturity</span>
-                                <strong style="color: var(--text-primary);">${p.m.toFixed(2)}</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
-                                <span style="color: var(--text-secondary);">Competency Enrichment</span>
-                                <strong style="color: var(--text-primary);">${p.c.toFixed(2)}</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
-                                <span style="color: var(--text-secondary);">Bringing Inspiration</span>
-                                <strong style="color: var(--text-primary);">${p.i.toFixed(2)}</strong>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                scorecardsContainer.innerHTML += `
-                    <div class="card text-center" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; margin-bottom: 0; opacity: 0.7;">
-                        <div>
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: var(--text-muted); margin-bottom: 16px; font-size: 0.95rem;">
+                    <div class="eval-stack-card" style="opacity: 0.7;">
+                        <div class="eval-stack-col-score">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; font-size: 0.95rem;">
                                 <i data-lucide="${p.icon}" size="16"></i>
                                 <span>${p.name}</span>
                             </div>
-                            <div class="score-box" style="margin-bottom: 16px; background-color: var(--bg-tertiary);">
+                            <div class="score-box" style="margin-bottom: 0; background-color: var(--bg-tertiary); width: 100%;">
                                 <div class="score-num" style="color: var(--text-muted); font-size: 1.8rem;">N/A</div>
                                 <div class="score-lbl">Belum Ada Data</div>
-                                <div style="margin-top: 8px;"><span class="badge badge-kurang" style="background-color: var(--border-color); color: var(--text-muted);">Tidak Tersedia</span></div>
                             </div>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 12px; text-align: left;">
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+                        <div class="eval-stack-col-details" style="color: var(--text-muted);">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
                                 <span>Self Maturity</span>
                                 <strong>-</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
                                 <span>Competency Enrichment</span>
                                 <strong>-</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
                                 <span>Bringing Inspiration</span>
                                 <strong>-</strong>
                             </div>
                         </div>
+                        <div class="eval-stack-col-interpret" style="color: var(--text-muted); font-size: 0.85rem; text-align: center;">
+                            Analisis gap tidak dapat dihitung karena data evaluasi perspektif ini belum tersedia.
+                        </div>
                     </div>
                 `;
+                return;
             }
-        });
 
-        // Gap Analysis
-        let sumPublicIpk = 0;
-        let countPublicIpk = 0;
-        if (hasPeer) { sumPublicIpk += peerIpk; countPublicIpk++; }
-        if (hasManager) { sumPublicIpk += managerIpk; countPublicIpk++; }
-        if (hasExternal) { sumPublicIpk += externalIpk; countPublicIpk++; }
+            // Sub-scores details section
+            const detailsHtml = `
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+                    <span style="color: var(--text-secondary); font-weight: 500;">Self Maturity</span>
+                    <strong style="color: var(--text-primary);">${p.m.toFixed(2)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+                    <span style="color: var(--text-secondary); font-weight: 500;">Competency Enrichment</span>
+                    <strong style="color: var(--text-primary);">${p.c.toFixed(2)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                    <span style="color: var(--text-secondary); font-weight: 500;">Bringing Inspiration</span>
+                    <strong style="color: var(--text-primary);">${p.i.toFixed(2)}</strong>
+                </div>
+            `;
 
-        const ipkSelf = hasSelf ? selfIpk : null;
-        const ipkEval = countPublicIpk > 0 ? sumPublicIpk / countPublicIpk : null;
+            // Score column section
+            const scoreHtml = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; font-size: 0.95rem;">
+                    <i data-lucide="${p.icon}" size="16" style="color: ${p.color};"></i>
+                    <span>${p.name}</span>
+                </div>
+                <div class="score-box" style="margin-bottom: 0; width: 100%;">
+                    <div class="score-num" style="font-size: 2rem;">${p.ipk.toFixed(2)}</div>
+                    <div class="score-lbl">IPK Perspektif</div>
+                    <div style="margin-top: 8px;">${getIpkBadge(p.ipk)}</div>
+                </div>
+            `;
 
-        document.getElementById('gap-self-val').textContent = ipkSelf ? ipkSelf.toFixed(3) : 'N/A';
-        document.getElementById('gap-public-val').textContent = ipkEval ? ipkEval.toFixed(3) : 'N/A';
-
-        const gapDiffContainer = document.getElementById('gap-diff-container');
-        const gapDiffVal = document.getElementById('gap-diff-val');
-        const gapDiffLbl = document.getElementById('gap-diff-lbl');
-
-        const interpretBox = document.getElementById('gap-interpretation-box');
-        const interpretTitle = document.getElementById('gap-interpretation-title');
-        const interpretText = document.getElementById('gap-interpretation-text');
-
-        if (ipkSelf && ipkEval) {
-            const gap = ipkEval - ipkSelf;
-            const sign = gap >= 0 ? '+' : '';
-            gapDiffVal.textContent = sign + gap.toFixed(3);
-            
+            // Gap & Interpretation section
+            let interpretHtml = '';
             const isGroup = name === 'all';
-            const subject = isGroup ? 'Rata-rata Awardee' : 'Anda/Awardee';
             const subjectLower = isGroup ? 'awardee' : 'kamu';
 
-            if (gap > 0) {
-                gapDiffContainer.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
-                gapDiffVal.style.color = 'var(--success)';
-                gapDiffLbl.textContent = 'Positif (Publik > Mandiri)';
-                
-                if (gap > 0.3) {
-                    interpretBox.className = 'callout warning';
-                    interpretTitle.innerHTML = '<i data-lucide="alert-circle"></i> Kecenderungan Imposter Syndrome';
-                    interpretText.innerHTML = `Nilai yang dicapai mencegah sifat arogan, membuat ${subjectLower} tetap membumi (humble), dan menjaga motivasi untuk terus belajar. Namun, karena gap nilai IPKnya cukup jauh (<strong>+${gap.toFixed(3)}</strong>), ini bisa mengarah ke <strong>Imposter Syndrome (sindrom penipu)</strong>. ${isGroup ? 'Awardee secara kolektif' : 'Kamu'} sering meragukan kapasitas sendiri dan merasa tidak pantas menerima pujian. Efek buruknya, bisa kehilangan peluang berharga karena merasa "belum siap", padahal secara objektif publik tahu ${isGroup ? 'awardee' : 'kamu'} sudah sangat mampu.`;
-                } else {
-                    interpretBox.className = 'callout success';
-                    interpretTitle.innerHTML = '<i data-lucide="check-circle"></i> Penilaian Sehat & Rendah Hati';
-                    interpretText.innerHTML = `Nilai yang dicapai mencegah sifat arogan, membuat ${subjectLower} tetap membumi (humble), dan menjaga motivasi untuk terus belajar. Gap positif yang tipis (<strong>+${gap.toFixed(3)}</strong>) menunjukkan tingkat kerendahhatian yang sehat, di mana ${isGroup ? 'rata-rata awardee' : 'kamu'} menilai diri secara objektif-konservatif sedangkan publik sangat mengapresiasi kinerjanya.`;
-                }
-            } else if (gap < 0) {
-                gapDiffContainer.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-                gapDiffVal.style.color = 'var(--danger)';
-                gapDiffLbl.textContent = 'Negatif (Publik < Mandiri)';
-
-                if (Math.abs(gap) > 0.3) {
-                    interpretBox.className = 'callout warning';
-                    interpretTitle.innerHTML = '<i data-lucide="alert-triangle"></i> Risiko Dunning-Kruger Effect';
-                    interpretText.innerHTML = `Nilai yang dicapai membentuk kepercayaan diri yang berlebih kadang bisa membantu di tahap awal. Namun, karena gap nilai IPKnya cukup jauh (<strong>${gap.toFixed(3)}</strong>), ini bisa sangat berisiko terjebak <strong>Dunning-Kruger Effect</strong>, di mana seseorang tidak menyadari ketidakmampuannya. Penting untuk melakukan refleksi kritis mendalam dan menyelaraskan standar kinerja dengan ekspektasi publik.`;
-                } else {
-                    interpretBox.className = 'callout info';
-                    interpretTitle.innerHTML = '<i data-lucide="info"></i> Kepercayaan Diri yang Baik';
-                    interpretText.innerHTML = `Nilai yang dicapai membentuk kepercayaan diri yang berlebih yang kadang bisa membantu di tahap awal. Selisih negatif yang tipis (<strong>${gap.toFixed(3)}</strong>) merupakan hal yang wajar dalam evaluasi kinerja dan menunjukkan rasa percaya diri yang baik.`;
-                }
+            if (idx === 0) {
+                // Mandiri (Self) - Baseline
+                interpretHtml = `
+                    <div class="callout info" style="margin: 0; border-left-color: var(--info);">
+                        <h4 style="margin-bottom: 6px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><i data-lucide="info" size="14"></i> Persepsi Diri (Baseline)</h4>
+                        <p style="font-size: 0.75rem; line-height: 1.4; color: var(--text-secondary); margin: 0;">
+                            Evaluasi Mandiri mencerminkan tingkat kesadaran diri (self-awareness) dan cara Anda menilai kapasitas pribadi. Gunakan nilai ini sebagai cermin pembanding terhadap umpan balik objektif dari rekan kerja, manajer, dan jejaring eksternal untuk menyelaraskan persepsi diri Anda.
+                        </p>
+                    </div>
+                `;
             } else {
-                gapDiffContainer.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-                gapDiffVal.style.color = 'var(--info)';
-                gapDiffLbl.textContent = 'Sempurna (Publik = Mandiri)';
-                
-                interpretBox.className = 'callout success';
-                interpretTitle.innerHTML = '<i data-lucide="check-circle-2"></i> Keseimbangan Sempurna (Self-Awareness Tinggi)';
-                interpretText.innerHTML = `Nilai yang dicapai adalah kondisi yang paling ideal. Artinya, ${subjectLower} memiliki tingkat <strong>Self-Awareness (kesadaran diri)</strong> yang tinggi, tahu persis di mana kekuatan dan kelemahannya, dan publik mengonfirmasi hal tersebut. Ekspektasi dan realita berjalan beriringan tanpa ada kebohongan atau rasa rendah diri yang tidak perlu.`;
+                // Peer, Manager, External Gaps
+                if (ipkSelf !== null) {
+                    const gap = p.ipk - ipkSelf;
+                    const sign = gap >= 0 ? '+' : '';
+                    const gapStr = sign + gap.toFixed(2);
+                    
+                    let gapBgColor = '';
+                    let gapTextColor = '';
+                    let gapLabel = '';
+                    let interpretTitle = '';
+                    let interpretText = '';
+                    let calloutClass = 'callout';
+
+                    if (gap > 0) {
+                        gapBgColor = 'rgba(16, 185, 129, 0.1)';
+                        gapTextColor = 'var(--success)';
+                        gapLabel = 'Positif (Publik > Mandiri)';
+                        
+                        if (gap > 0.3) {
+                            calloutClass += ' warning';
+                            interpretTitle = '<i data-lucide="alert-circle" size="14"></i> Kecenderungan Imposter Syndrome';
+                            if (p.name.includes('Peer')) {
+                                interpretText = `Rekan sejawat menilai Anda jauh lebih kompeten, kolaboratif, dan solutif dibanding penilaian Anda sendiri. Selisih yang cukup besar (<strong>${gapStr}</strong>) mengindikasikan Anda mungkin merasa canggung atau kurang percaya diri (imposter) dalam tim, padahal rekan sejawat sangat mengapresiasi kontribusi nyata Anda.`;
+                            } else if (p.name.includes('Manager')) {
+                                interpretText = `Manajer Wilayah mengamati potensi kepemimpinan dan kinerja objektif Anda jauh melebihi yang Anda rasakan. Dengan gap yang signifikan ini (<strong>${gapStr}</strong>), Manajer menilai Anda siap untuk memikul tanggung jawab yang lebih besar, meskipun secara internal Anda masih ragu.`;
+                            } else {
+                                interpretText = `Masyarakat atau jejaring eksternal merasakan manfaat kehadiran Anda jauh lebih besar dibanding penilaian mandiri Anda. Gap positif yang lebar (<strong>${gapStr}</strong>) mengonfirmasi keberhasilan program atau proyek sosial Anda di lapangan yang dirasakan nyata oleh publik.`;
+                            }
+                        } else {
+                            calloutClass += ' success';
+                            interpretTitle = '<i data-lucide="check-circle" size="14"></i> Penilaian Sehat & Rendah Hati';
+                            if (p.name.includes('Peer')) {
+                                interpretText = `Penilaian Anda dan rekan sejawat sangat selaras dengan sedikit apresiasi positif (<strong>${gapStr}</strong>). Ini menunjukkan hubungan interpersonal yang seimbang, di mana Anda dihargai di lingkungan pertemanan/tim secara objektif.`;
+                            } else if (p.name.includes('Manager')) {
+                                interpretText = `Sinergi ekspektasi yang sehat dengan Manajer Wilayah (gap: <strong>${gapStr}</strong>). Standar kerja yang Anda terapkan selaras dengan arahan dan penilaian Manajer, menunjukkan komunikasi kerja yang berjalan baik dan produktif.`;
+                            } else {
+                                interpretText = `Resonansi dampak sosial Anda selaras dengan yang dirasakan oleh jejaring luar (gap: <strong>${gapStr}</strong>). Ini menunjukkan kesesuaian yang sehat antara rencana program pemberdayaan Anda dengan kebutuhan nyata masyarakat sasaran.`;
+                            }
+                        }
+                    } else if (gap < 0) {
+                        gapBgColor = 'rgba(239, 68, 68, 0.1)';
+                        gapTextColor = 'var(--danger)';
+                        gapLabel = 'Negatif (Publik < Mandiri)';
+
+                        if (Math.abs(gap) > 0.3) {
+                            calloutClass += ' warning';
+                            interpretTitle = '<i data-lucide="alert-triangle" size="14"></i> Risiko Kesenjangan Persepsi (Dunning-Kruger)';
+                            if (p.name.includes('Peer')) {
+                                interpretText = `Rekan sejawat menilai kinerja atau kerja sama Anda jauh di bawah yang Anda yakini (gap: <strong>${gapStr}</strong>). Ini mengindikasikan adanya blind spot dalam komunikasi, kerja tim, atau perilaku sehari-hari yang perlu diselaraskan agar tidak memicu gesekan kelompok.`;
+                            } else if (p.name.includes('Manager')) {
+                                interpretText = `Manajer menilai kinerja kepemimpinan atau kepatuhan program Anda di bawah ekspektasi mandiri Anda (gap: <strong>${gapStr}</strong>). Hal ini krusial dan membutuhkan diskusi umpan balik langsung untuk menyamakan visi dan standar kinerja.`;
+                            } else {
+                                interpretText = `Terdapat jurang pemisah yang lebar di mana Anda merasa sudah berdampak besar, namun masyarakat menilai dampaknya masih minim (gap: <strong>${gapStr}</strong>). Penting mengevaluasi strategi pendekatan sosial dan relevansi proyek Anda.`;
+                            }
+                        } else {
+                            calloutClass += ' info';
+                            interpretTitle = '<i data-lucide="info" size="14"></i> Kepercayaan Diri yang Baik';
+                            if (p.name.includes('Peer')) {
+                                interpretText = `Selisih negatif tipis (<strong>${gapStr}</strong>) merupakan hal yang wajar dalam dinamika tim dan menunjukkan rasa percaya diri yang baik. Sedikit evaluasi pada aspek kolaborasi akan mengoptimalkan hubungan dengan rekan.`;
+                            } else if (p.name.includes('Manager')) {
+                                interpretText = `Selisih negatif tipis di mata Manajer (<strong>${gapStr}</strong>) adalah hal wajar dalam evaluasi formal. Anda memiliki keyakinan diri yang kuat, dan sedikit penyelarasan target operasional akan menutup celah persepsi ini.`;
+                            } else {
+                                interpretText = `Selisih negatif tipis (<strong>${gapStr}</strong>) menunjukkan Anda percaya diri menjalankan peran sosial. Masukan kecil dari masyarakat/jejaring luar dapat digunakan untuk memperluas kemitraan proyek Anda.`;
+                            }
+                        }
+                    } else {
+                        gapBgColor = 'rgba(59, 130, 246, 0.1)';
+                        gapTextColor = 'var(--info)';
+                        gapLabel = 'Sempurna (Publik = Mandiri)';
+                        calloutClass += ' success';
+                        interpretTitle = '<i data-lucide="check-circle-2" size="14"></i> Keseimbangan Sempurna (Self-Awareness Tinggi)';
+                        interpretText = `Penilaian Anda sangat ideal dan presisi (gap: <strong>0.00</strong>). Ini menunjukkan Anda memiliki tingkat kesadaran diri (self-awareness) yang sangat tinggi, tahu persis kekuatan dan kelemahan Anda, dan publik sepenuhnya mengonfirmasi hal tersebut.`;
+                    }
+
+                    interpretHtml = `
+                        <div class="eval-gap-badge-container">
+                            <div class="eval-gap-num-box" style="background-color: ${gapBgColor}; color: ${gapTextColor};">
+                                Gap: ${gapStr}
+                            </div>
+                            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">${gapLabel}</span>
+                        </div>
+                        <div class="${calloutClass}" style="margin: 0; padding: 12px 16px;">
+                            <h4 style="margin-bottom: 4px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">${interpretTitle}</h4>
+                            <p style="font-size: 0.75rem; line-height: 1.4; color: var(--text-secondary); margin: 0;">${interpretText}</p>
+                        </div>
+                    `;
+                } else {
+                    interpretHtml = `
+                        <div class="callout" style="margin: 0; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+                            Hubungkan dengan Evaluasi Mandiri untuk menghitung analisis gap.
+                        </div>
+                    `;
+                }
             }
-        } else {
-            gapDiffVal.textContent = 'N/A';
-            gapDiffLbl.textContent = 'Data belum lengkap';
-            interpretBox.className = 'callout';
-            interpretText.textContent = 'Analisis gap tidak dapat dihitung karena data evaluasi mandiri atau evaluasi publik belum lengkap.';
-        }
+
+            scorecardsContainer.innerHTML += `
+                <div class="eval-stack-card">
+                    <div class="eval-stack-col-score">
+                        ${scoreHtml}
+                    </div>
+                    <div class="eval-stack-col-details">
+                        ${detailsHtml}
+                    </div>
+                    <div class="eval-stack-col-interpret">
+                        ${interpretHtml}
+                    </div>
+                </div>
+            `;
+        });
 
         // Radar Chart is removed, dynamically render score cards instead
         destroyChart('evalRadar');
@@ -1547,29 +1676,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Set total respondents in the header
         document.getElementById('leadpro-respondent-count').textContent = activeStats.respondent_count;
 
+        const pctDampak = (activeStats.dampak / 4) * 100;
+        const pctPeran = (activeStats.peran / 4) * 100;
+        const pctKapasitas = (activeStats.kapasitas / 4) * 100;
+        const pctRefleksi = (activeStats.refleksi / 4) * 100;
+        const pctIpk = (activeStats.ipk / 4) * 100;
+
         const valDampak = activeStats.dampak;
         const valPeran = activeStats.peran;
         const valKapasitas = activeStats.kapasitas;
         const valRefleksi = activeStats.refleksi;
 
-        // Populating Leadpro Scorecards (5 cards: IPK Proyek + 4 Dimensions)
+        // Populating Leadpro Scorecards (5 cards: Capaian Proyek + 4 Dimensions)
         const scorecardsContainer = document.getElementById('leadpro-scorecards-container');
         scorecardsContainer.innerHTML = '';
 
         const cards = [
             {
-                name: 'IPK Proyek',
+                name: 'Persentase Capaian Proyek',
                 icon: 'award',
-                score: activeStats.ipk,
+                score: pctIpk,
                 isIpk: true,
-                badge: getIpkBadge(activeStats.ipk),
+                badge: getLeadproBadge(pctIpk),
                 color: 'var(--primary)',
                 desc: 'Akumulasi rata-rata seluruh indikator proyek'
             },
             {
                 name: 'Dampak Proyek (Q1-Q7)',
                 icon: 'globe',
-                score: valDampak,
+                score: pctDampak,
                 isIpk: false,
                 color: 'var(--info)',
                 desc: 'Kemanfaatan aksi nyata untuk masyarakat sasaran'
@@ -1577,7 +1712,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             {
                 name: 'Peran Kepemimpinan (Q8-Q12)',
                 icon: 'users',
-                score: valPeran,
+                score: pctPeran,
                 isIpk: false,
                 color: 'var(--success)',
                 desc: 'Kapasitas mengelola tim dan koordinasi mitra'
@@ -1585,7 +1720,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             {
                 name: 'Kapasitas Pribadi (Q13-Q17)',
                 icon: 'brain',
-                score: valKapasitas,
+                score: pctKapasitas,
                 isIpk: false,
                 color: 'var(--warning)',
                 desc: 'Peningkatan kompetensi kepemimpinan personal'
@@ -1593,7 +1728,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             {
                 name: 'Keberlanjutan (Q18-Q22)',
                 icon: 'refresh-cw',
-                score: valRefleksi,
+                score: pctRefleksi,
                 isIpk: false,
                 color: 'var(--accent)',
                 desc: 'Rencana jangka panjang dan keberlanjutan aksi'
@@ -1601,7 +1736,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ];
 
         cards.forEach(c => {
-            const pct = (c.score / 4) * 100;
+            const pct = c.score;
             scorecardsContainer.innerHTML += `
                 <div class="card text-center" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; margin-bottom: 0;">
                     <div>
@@ -1610,8 +1745,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <span>${c.name}</span>
                         </div>
                         <div class="score-box" style="margin-bottom: 12px;">
-                            <div class="score-num" style="${c.isIpk ? 'color: var(--primary);' : 'color: var(--text-primary); font-size: 2rem;'}">${c.score.toFixed(c.isIpk ? 3 : 2)}</div>
-                            <div class="score-lbl">${c.isIpk ? 'IPK Leadpro' : 'Nilai Rata-rata'}</div>
+                            <div class="score-num" style="${c.isIpk ? 'color: var(--primary);' : 'color: var(--text-primary); font-size: 2rem;'}">${c.score.toFixed(2)}%</div>
+                            <div class="score-lbl">${c.isIpk ? 'Persentase Capaian' : 'Skor Capaian'}</div>
                             ${c.isIpk ? `<div style="margin-top: 8px;">${c.badge}</div>` : ''}
                         </div>
                     </div>
@@ -1813,7 +1948,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td>${ipkPeer ? ipkPeer.toFixed(2) : '-'}</td>
                     <td>${ipkManager ? ipkManager.toFixed(2) : '-'}</td>
                     <td>${ipkJejaring ? ipkJejaring.toFixed(2) : '-'}</td>
-                    <td><strong>${ipkLeadpro ? ipkLeadpro.toFixed(2) : '-'}</strong></td>
+                    <td><strong>${ipkLeadpro ? ((ipkLeadpro / 4) * 100).toFixed(2) + '%' : '-'}</strong></td>
                     <td>
                         <button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">
                             Detail
@@ -1922,7 +2057,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         leadproList.innerHTML = '';
         data.questions.leadpro.forEach((q, idx) => {
             const globalAvg = globalAverages.leadpro[idx];
-            const textMatch = q.text.toLowerCase().includes(queryLeadpro);
+            const textMatch = (q.public_text || '').toLowerCase().includes(queryLeadpro);
             const codeMatch = q.code.toLowerCase().includes(queryLeadpro);
             
             if (queryLeadpro === '' || textMatch || codeMatch) {
@@ -1932,9 +2067,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div style="flex:1;">
                             <div class="q-detail-header">
                                 <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">Dimensi: ${getVariableNameForLeadproIndex(idx)}</span>
-                                <span style="font-size:0.8rem; font-weight:600; color:var(--secondary);">Nasional Avg: <strong>${globalAvg.toFixed(2)}</strong></span>
+                                <span style="font-size:0.8rem; font-weight:600; color:var(--secondary);">Nasional Avg: <strong>${((globalAvg / 4) * 100).toFixed(2)}%</strong></span>
                             </div>
-                            <p style="font-size:0.85rem; margin-top:4px;">"${q.text}"</p>
+                            <p style="font-size:0.85rem; margin-top:4px;">"${q.public_text || ''}"</p>
                         </div>
                     </div>
                 `;
