@@ -1681,6 +1681,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const valKapasitas = activeStats.kapasitas;
         const valRefleksi = activeStats.refleksi;
 
+        const pctDampak = (valDampak / 4) * 100;
+        const pctPeran = (valPeran / 4) * 100;
+        const pctKapasitas = (valKapasitas / 4) * 100;
+        const pctRefleksi = (valRefleksi / 4) * 100;
+        const pctIpk = (activeStats.ipk / 4) * 100;
+
         // Render AI Suggestions first to embed them in cards
         const suggestions = getLeadproSuggestions(valDampak, valPeran, valKapasitas, valRefleksi);
 
