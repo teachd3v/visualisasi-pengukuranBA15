@@ -1676,16 +1676,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Set total respondents in the header
         document.getElementById('leadpro-respondent-count').textContent = activeStats.respondent_count;
 
-        const pctDampak = (activeStats.dampak / 4) * 100;
-        const pctPeran = (activeStats.peran / 4) * 100;
-        const pctKapasitas = (activeStats.kapasitas / 4) * 100;
-        const pctRefleksi = (activeStats.refleksi / 4) * 100;
-        const pctIpk = (activeStats.ipk / 4) * 100;
-
         const valDampak = activeStats.dampak;
         const valPeran = activeStats.peran;
         const valKapasitas = activeStats.kapasitas;
         const valRefleksi = activeStats.refleksi;
+
+        // Render AI Suggestions first to embed them in cards
+        const suggestions = getLeadproSuggestions(valDampak, valPeran, valKapasitas, valRefleksi);
 
         // Populating Leadpro Scorecards (5 cards: Capaian Proyek + 4 Dimensions)
         const scorecardsContainer = document.getElementById('leadpro-scorecards-container');
@@ -1699,7 +1696,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 isIpk: true,
                 badge: getLeadproBadge(pctIpk),
                 color: 'var(--primary)',
-                desc: 'Akumulasi rata-rata seluruh indikator proyek'
+                desc: 'Akumulasi rata-rata seluruh indikator proyek',
+                suggestion: null
             },
             {
                 name: 'Dampak Proyek (Q1-Q7)',
@@ -1707,7 +1705,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 score: pctDampak,
                 isIpk: false,
                 color: 'var(--info)',
-                desc: 'Kemanfaatan aksi nyata untuk masyarakat sasaran'
+                desc: 'Kemanfaatan aksi nyata untuk masyarakat sasaran',
+                suggestion: suggestions.dampak
             },
             {
                 name: 'Peran Kepemimpinan (Q8-Q12)',
@@ -1715,7 +1714,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 score: pctPeran,
                 isIpk: false,
                 color: 'var(--success)',
-                desc: 'Kapasitas mengelola tim dan koordinasi mitra'
+                desc: 'Kapasitas mengelola tim dan koordinasi mitra',
+                suggestion: suggestions.peran
             },
             {
                 name: 'Kapasitas Pribadi (Q13-Q17)',
@@ -1723,7 +1723,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 score: pctKapasitas,
                 isIpk: false,
                 color: 'var(--warning)',
-                desc: 'Peningkatan kompetensi kepemimpinan personal'
+                desc: 'Peningkatan kompetensi kepemimpinan personal',
+                suggestion: suggestions.kapasitas
             },
             {
                 name: 'Keberlanjutan (Q18-Q22)',
@@ -1731,45 +1732,49 @@ document.addEventListener('DOMContentLoaded', async () => {
                 score: pctRefleksi,
                 isIpk: false,
                 color: 'var(--accent)',
-                desc: 'Rencana jangka panjang dan keberlanjutan aksi'
+                desc: 'Rencana jangka panjang dan keberlanjutan aksi',
+                suggestion: suggestions.refleksi
             }
         ];
 
         cards.forEach(c => {
             const pct = c.score;
             scorecardsContainer.innerHTML += `
-                <div class="card text-center" style="display: flex; flex-direction: column; justify-content: space-between; padding: 20px; margin-bottom: 0;">
-                    <div>
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; font-size: 0.9rem;">
+                <div class="eval-stack-card">
+                    <div class="eval-stack-col-score">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; font-size: 0.95rem;">
                             <i data-lucide="${c.icon}" size="16" style="color: ${c.color};"></i>
                             <span>${c.name}</span>
                         </div>
-                        <div class="score-box" style="margin-bottom: 12px;">
-                            <div class="score-num" style="${c.isIpk ? 'color: var(--primary);' : 'color: var(--text-primary); font-size: 2rem;'}">${c.score.toFixed(2)}%</div>
-                            <div class="score-lbl">${c.isIpk ? 'Persentase Capaian' : 'Skor Capaian'}</div>
+                        <div class="score-box" style="margin-bottom: 0; width: 100%;">
+                            <div class="score-num" style="font-size: 2rem; color: ${c.color};">${c.score.toFixed(2)}%</div>
+                            <div class="score-lbl">Capaian Persentase</div>
                             ${c.isIpk ? `<div style="margin-top: 8px;">${c.badge}</div>` : ''}
                         </div>
                     </div>
-                    <div>
-                        ${!c.isIpk ? `
-                            <div class="progress-track" style="margin-bottom: 12px; height: 6px; background-color: var(--bg-tertiary);">
-                                <div class="progress-bar" style="width: ${pct}%; background-color: ${c.color}; height: 100%; border-radius: 4px;"></div>
-                            </div>
-                        ` : ''}
-                        <div style="font-size: 0.75rem; color: var(--text-secondary); text-align: center; line-height: 1.3;">
+                    <div class="eval-stack-col-details" style="display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 8px;">
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">Progres Capaian</span>
+                        <div class="progress-track" style="margin: 0; height: 10px; background-color: var(--bg-tertiary); border-radius: 6px; overflow: hidden; width: 100%;">
+                            <div class="progress-bar" style="width: ${pct}%; background-color: ${c.color}; height: 100%; border-radius: 6px;"></div>
+                        </div>
+                        <span style="font-size: 0.75rem; text-align: right; font-weight: 700; color: ${c.color};">${pct.toFixed(2)}% / 100%</span>
+                    </div>
+                    <div class="eval-stack-col-interpret">
+                        <div style="font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px;">
                             ${c.desc}
                         </div>
+                        ${c.suggestion ? `
+                            <div class="callout" style="margin: 0; padding: 12px 16px; border-left-color: ${c.color}; background-color: rgba(0,0,0,0.01);">
+                                <h4 style="margin-bottom: 4px; font-size: 0.85rem; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                                    <i data-lucide="sparkles" size="14" style="color: ${c.color};"></i> Saran Tindak Lanjut
+                                </h4>
+                                <p style="font-size: 0.75rem; line-height: 1.4; color: var(--text-secondary); margin: 0;">${c.suggestion}</p>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
         });
-
-        // Render AI Suggestions
-        const suggestions = getLeadproSuggestions(valDampak, valPeran, valKapasitas, valRefleksi);
-        document.getElementById('suggest-dampak').textContent = suggestions.dampak;
-        document.getElementById('suggest-peran').textContent = suggestions.peran;
-        document.getElementById('suggest-kapasitas').textContent = suggestions.kapasitas;
-        document.getElementById('suggest-refleksi').textContent = suggestions.refleksi;
 
         // Clean up chart references since charts are removed
         destroyChart('leadproRadar');
