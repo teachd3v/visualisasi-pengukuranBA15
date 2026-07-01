@@ -68,6 +68,24 @@ export function reconstructSurveyData(rawAssesment, rawInstrumenAssesment, rawLe
                 stat.q_counts[i - 1] += 1;
             }
         }
+
+        // Extract qualitative feedback (Saran Diri and Saran Program)
+        const cleanSaranDiri = (row["Saran Diri"] || "").toString().trim();
+        const cleanSaranProgram = (row["Saran Program"] || "").toString().trim();
+        
+        const hasSaranDiri = cleanSaranDiri && cleanSaranDiri !== "-";
+        const hasSaranProgram = cleanSaranProgram && cleanSaranProgram !== "-";
+
+        if (hasSaranDiri || hasSaranProgram) {
+            if (!data.assessments[name].saran) {
+                data.assessments[name].saran = [];
+            }
+            data.assessments[name].saran.push({
+                category: category,
+                saran_diri: hasSaranDiri ? cleanSaranDiri : null,
+                saran_program: hasSaranProgram ? cleanSaranProgram : null
+            });
+        }
     });
 
     // Post-process Assessments to calculate averages
@@ -174,6 +192,27 @@ export function reconstructSurveyData(rawAssesment, rawInstrumenAssesment, rawLe
                 };
             }
             updateLpStats(lp.by_relation[relation]);
+        }
+
+        // Extract qualitative feedback (Pesan, Kritik, and Saran)
+        const cleanPesan = (row["Pesan"] || "").toString().trim();
+        const cleanKritik = (row["Kritik"] || "").toString().trim();
+        const cleanSaran = (row["Saran"] || "").toString().trim();
+
+        const hasPesan = cleanPesan && cleanPesan !== "-";
+        const hasKritik = cleanKritik && cleanKritik !== "-";
+        const hasSaran = cleanSaran && cleanSaran !== "-";
+
+        if (hasPesan || hasKritik || hasSaran) {
+            if (!lp.feedback) {
+                lp.feedback = [];
+            }
+            lp.feedback.push({
+                hubungan: relation || "Tidak Diketahui",
+                pesan: hasPesan ? cleanPesan : null,
+                kritik: hasKritik ? cleanKritik : null,
+                saran: hasSaran ? cleanSaran : null
+            });
         }
     });
 

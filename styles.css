@@ -1032,4 +1032,102 @@ body.no-transitions *:not(.spin) {
     }
 }
 
+/* ==========================================
+   FEEDBACK KUALITATIF (Saran & Masukan)
+   ========================================== */
+.qualitative-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.qualitative-bubble {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    border-left: 5px solid var(--primary);
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+}
+
+.qualitative-bubble:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.qualitative-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.qualitative-author {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.qualitative-category {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.qualitative-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+@media (min-width: 768px) {
+    .qualitative-content-split {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.qualitative-field {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.qualitative-field-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.qualitative-field-text {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+/* Modifikasi Warna Aksen Sesuai Hubungan/Kategori */
+.bubble-peer { border-left-color: var(--success); }       /* Hijau */
+.bubble-manager { border-left-color: var(--warning); }    /* Jingga/Kuning */
+.bubble-external { border-left-color: var(--accent); }     /* Rose */
+.bubble-leadpro { border-left-color: var(--info); }        /* Biru */
+
 

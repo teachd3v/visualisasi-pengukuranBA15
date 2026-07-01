@@ -1510,6 +1510,86 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Radar Chart is removed, dynamically render score cards instead
         destroyChart('evalRadar');
 
+        // Render qualitative feedback (Saran Diri and Saran Program)
+        const evalQualCard = document.getElementById('eval-qualitative-card');
+        const evalQualContainer = document.getElementById('eval-qualitative-container');
+
+        if (name === 'all') {
+            evalQualCard.style.display = 'none';
+        } else {
+            const awardee = data.assessments[name];
+            // Filter saran given by Peer, Manager, or External
+            const publicSaran = (awardee.saran || []).filter(s => 
+                s.category === 'Peer Awardee' || 
+                s.category === 'Manajer Wilayah' || 
+                s.category === 'Jejaring Eksternal'
+            );
+
+            if (publicSaran.length === 0) {
+                evalQualCard.style.display = 'none';
+            } else {
+                evalQualCard.style.display = 'block';
+                evalQualContainer.innerHTML = '';
+                publicSaran.forEach(s => {
+                    let bubbleClass = 'bubble-peer';
+                    let iconName = 'users';
+                    if (s.category === 'Manajer Wilayah') {
+                        bubbleClass = 'bubble-manager';
+                        iconName = 'user-check';
+                    } else if (s.category === 'Jejaring Eksternal') {
+                        bubbleClass = 'bubble-external';
+                        iconName = 'globe';
+                    }
+
+                    let contentHtml = '';
+                    if (s.saran_diri && s.saran_program) {
+                        contentHtml = `
+                            <div class="qualitative-content qualitative-content-split">
+                                <div class="qualitative-field">
+                                    <div class="qualitative-field-title"><i data-lucide="target" size="14"></i> Umpan Balik untuk Diri</div>
+                                    <div class="qualitative-field-text">${s.saran_diri}</div>
+                                </div>
+                                <div class="qualitative-field">
+                                    <div class="qualitative-field-title"><i data-lucide="building" size="14"></i> Saran untuk Program</div>
+                                    <div class="qualitative-field-text">${s.saran_program}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (s.saran_diri) {
+                        contentHtml = `
+                            <div class="qualitative-content">
+                                <div class="qualitative-field">
+                                    <div class="qualitative-field-title"><i data-lucide="target" size="14"></i> Umpan Balik untuk Diri</div>
+                                    <div class="qualitative-field-text">${s.saran_diri}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (s.saran_program) {
+                        contentHtml = `
+                            <div class="qualitative-content">
+                                <div class="qualitative-field">
+                                    <div class="qualitative-field-title"><i data-lucide="building" size="14"></i> Saran untuk Program</div>
+                                    <div class="qualitative-field-text">${s.saran_program}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    evalQualContainer.innerHTML += `
+                        <div class="qualitative-bubble ${bubbleClass}">
+                            <div class="qualitative-header">
+                                <div class="qualitative-author">
+                                    <i data-lucide="${iconName}" size="16"></i>
+                                    <span>${s.category}</span>
+                                </div>
+                            </div>
+                            ${contentHtml}
+                        </div>
+                    `;
+                });
+            }
+        }
+
         lucide.createIcons();
     }
 
@@ -1785,6 +1865,70 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Clean up chart references since charts are removed
         destroyChart('leadproRadar');
         destroyChart('leadproRelations');
+
+        // Render qualitative feedback (Pesan, Kritik, and Saran)
+        const lpQualCard = document.getElementById('leadpro-qualitative-card');
+        const lpQualContainer = document.getElementById('leadpro-qualitative-container');
+
+        if (name === 'all') {
+            lpQualCard.style.display = 'none';
+        } else {
+            let feedList = lpData.feedback || [];
+            
+            // Filter by relation/Hubungan if a specific relation is chosen (not overall)
+            if (activeRel !== 'overall') {
+                feedList = feedList.filter(f => f.hubungan === activeRel);
+            }
+
+            if (feedList.length === 0) {
+                lpQualCard.style.display = 'none';
+            } else {
+                lpQualCard.style.display = 'block';
+                lpQualContainer.innerHTML = '';
+                feedList.forEach(f => {
+                    let fieldsHtml = '';
+                    
+                    if (f.pesan) {
+                        fieldsHtml += `
+                            <div class="qualitative-field">
+                                <div class="qualitative-field-title" style="color: var(--info);"><i data-lucide="message-square" size="14"></i> Pesan</div>
+                                <div class="qualitative-field-text">${f.pesan}</div>
+                            </div>
+                        `;
+                    }
+                    if (f.kritik) {
+                        fieldsHtml += `
+                            <div class="qualitative-field">
+                                <div class="qualitative-field-title" style="color: var(--danger);"><i data-lucide="alert-circle" size="14"></i> Kritik</div>
+                                <div class="qualitative-field-text">${f.kritik}</div>
+                            </div>
+                        `;
+                    }
+                    if (f.saran) {
+                        fieldsHtml += `
+                            <div class="qualitative-field">
+                                <div class="qualitative-field-title" style="color: var(--success);"><i data-lucide="lightbulb" size="14"></i> Saran</div>
+                                <div class="qualitative-field-text">${f.saran}</div>
+                            </div>
+                        `;
+                    }
+
+                    lpQualContainer.innerHTML += `
+                        <div class="qualitative-bubble bubble-leadpro">
+                            <div class="qualitative-header">
+                                <div class="qualitative-author">
+                                    <i data-lucide="user" size="16"></i>
+                                    <span>Responden - ${f.hubungan}</span>
+                                </div>
+                            </div>
+                            <div class="qualitative-content">
+                                ${fieldsHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
 
         lucide.createIcons();
     }
