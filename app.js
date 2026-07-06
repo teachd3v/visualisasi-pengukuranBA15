@@ -1105,7 +1105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     externalIpk += eStats.ipk;
                     sumExternalResp += eStats.respondent_count;
                     countE++;
-                    if (eStats.respondent_count >= 30) metExternal++;
+                    if (eStats.respondent_count >= 20) metExternal++;
                 }
             });
 
@@ -1132,11 +1132,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Set compliance values and labels
             document.getElementById('comp-manager-val').textContent = `${countM} / ${totalAwardees}`;
             document.getElementById('comp-peer-val').textContent = `${countP} / ${totalAwardees}`;
-            document.getElementById('comp-external-val').textContent = `${sumExternalResp} / ${30 * totalAwardees}`;
+            document.getElementById('comp-external-val').textContent = `${sumExternalResp} / ${20 * totalAwardees}`;
             
             document.querySelector('#comp-manager > span').textContent = 'Manajer Wilayah (Min. 1 per Awardee)';
             document.querySelector('#comp-peer > span').textContent = 'Peer Awardee (Rekan Wilayah)';
-            document.querySelector('#comp-external > span').textContent = 'Jejaring Eksternal (Min. 30 per Awardee)';
+            document.querySelector('#comp-external > span').textContent = 'Jejaring Eksternal (Min. 20 per Awardee)';
 
             updateComplianceUI('comp-manager', countM, totalAwardees, 'comp-manager-badge');
             updateComplianceUI('comp-peer', countP, totalAwardees, 'comp-peer-badge');
@@ -1153,11 +1153,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             document.getElementById('comp-manager-val').textContent = `${countManager} / 1`;
             document.getElementById('comp-peer-val').textContent = `${countPeer} / ${targetPeer}`;
-            document.getElementById('comp-external-val').textContent = `${countExternal} / 30`;
+            document.getElementById('comp-external-val').textContent = `${countExternal} / 20`;
 
             document.querySelector('#comp-manager > span').textContent = 'Manajer Wilayah (Min. 1)';
             document.querySelector('#comp-peer > span').textContent = `Peer Awardee (Min. ${targetPeer})`;
-            document.querySelector('#comp-external > span').textContent = 'Jejaring Eksternal (Min. 30)';
+            document.querySelector('#comp-external > span').textContent = 'Jejaring Eksternal (Min. 20)';
 
             updateComplianceUI('comp-manager', countManager, 1, 'comp-manager-badge');
             updateComplianceUI('comp-peer', countPeer, targetPeer, 'comp-peer-badge');
@@ -1222,22 +1222,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             let badgeClass = 'badge';
             let iconName = 'alert-triangle';
             
-            if (count > 30) {
+            if (count > 20) {
                 statusText = 'Sangat Memuaskan';
                 cardClass += ' met-excel';
                 badgeClass += ' badge-success';
                 iconName = 'check-check';
-            } else if (count >= 24) {
+            } else if (count >= 16) {
                 statusText = 'Memuaskan';
                 cardClass += ' met';
                 badgeClass += ' badge-success';
                 iconName = 'check';
-            } else if (count >= 16) {
+            } else if (count >= 12) {
                 statusText = 'Cukup Memuaskan';
                 cardClass += ' warning';
                 badgeClass += ' badge-cumlaude';
                 iconName = 'info';
-            } else if (count >= 8) {
+            } else if (count >= 6) {
                 statusText = 'Kurang Memuaskan';
                 cardClass += ' kurang';
                 badgeClass += ' badge-kurang';
